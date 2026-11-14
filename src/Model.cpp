@@ -1,5 +1,31 @@
 #include <cstdint>
 #include "Model.h"
+#include <sstream>
+#include <cctype>
+#include "GPU.h"
+
+
+Model::Model(const std::string& id, std::size_t embeddingSize): modelId(id), embeddingSize(embeddingSize){}
+
+std::vector<std::string> Model::tokenizer(std::string text) const{
+    std::vector<std::string> tokens;
+    std::stringstream ss(text);
+    std::string word;
+    while (std::getline(ss, word, ' ')) {
+        std::string cleanWord = "";
+        for (char c : word) {
+            if (std::isalnum(c)) {
+                cleanWord += c;
+            }
+        }
+        if (!cleanWord.empty()) {
+            tokens.push_back(cleanWord);
+        }
+    }
+
+    return tokens;
+}
+
 
 std::uint64_t Model::mixByte(std::uint64_t state, unsigned char byte) const {
     state ^= byte;
