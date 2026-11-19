@@ -26,6 +26,7 @@ std::vector<std::string> Model::tokenizer(std::string text) const{
     return tokens;
 }
 
+std::size_t Model::getEmbeddingSize() const{return embeddingSize;}
 
 std::uint64_t Model::mixByte(std::uint64_t state, unsigned char byte) const {
     state ^= byte;

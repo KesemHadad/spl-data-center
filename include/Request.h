@@ -54,9 +54,13 @@ public:
 };
 
 class EmbeddingRequest: public Request{
+private:
+    std::string output;
+    bool isFinished;
+    std::size_t processedTokens;
 public:
     EmbeddingRequest(int id, const Model& model, int admissionCycle, std::string prompt);
-        virtual std::size_t getNeededMemory(const GPU& gpu) const override;
+    virtual std::size_t getNeededMemory(const GPU& gpu) const override;
     virtual std::size_t getMaxNeededMemory() const override;
     virtual std::vector<std::string> getCacheableTokens() const override;
     virtual void allocateOneBlock(GPU& gpu, std::size_t slot) const override;
