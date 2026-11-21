@@ -82,3 +82,22 @@ MemoryBlock& MemoryBlock::operator=(MemoryBlock&& other) noexcept {
     return *this;
 }
 
+
+
+KVBlock::KVBlock(size_t size) : MemoryBlock(size) { }
+IdleAction KVBlock::onLastRelease() const { return IdleAction::KeepCached; }
+
+MemoryBlock* KVBlock::clone() const {
+    MemoryBlock* returnVal = new KVBlock(*this);
+    return returnVal;
+}
+
+
+EmbeddingWorkspace::EmbeddingWorkspace(size_t size) : MemoryBlock(size) { }
+IdleAction EmbeddingWorkspace::onLastRelease() const { return IdleAction::Destroy; }
+
+MemoryBlock* EmbeddingWorkspace::clone() const {
+    MemoryBlock* returnVal = new EmbeddingWorkspace(*this);
+    return returnVal;
+}
+
