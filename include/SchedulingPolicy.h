@@ -1,5 +1,9 @@
 #ifndef SCHEDULING_POLICY_H_
-#define SCHEDULING_POLICY_H
+#define SCHEDULING_POLICY_H_
+#include <vector>
+
+class Request;
+class GPU;
 
 class SchedulingPolicy {
 public:
@@ -9,13 +13,17 @@ public:
 };
 
 class ArrivalOrderPolicy : public SchedulingPolicy { 
+    virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
+    virtual SchedulingPolicy* clone() const override;
 
 };
 class ShortestJobPolicy : public SchedulingPolicy { 
-
+    virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
+    virtual SchedulingPolicy* clone() const override;
 };
 class LongestPrefixPolicy : public SchedulingPolicy {
-
+    virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
+    virtual SchedulingPolicy* clone() const override;
 };
 
 
