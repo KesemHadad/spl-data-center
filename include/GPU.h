@@ -11,13 +11,15 @@ struct PrefixMatch {
 };
 
 class MemoryBlock;
+class Request; 
+class GenerativeRequest;
+class EmbeddingRequest;
 
 class GPU{
 public:
     GPU(std::size_t blocksNum, std::size_t blockSize);
     std::size_t availableSlots() const;
     std::size_t getBlocksForMemory(std::size_t memory) const;
-    std::size_t getBlockSize() const; // Kesem added this call - to get the blockSize
     void reserve(std::size_t n, const Request& request);
     void unreserve(std::size_t n, const Request& request);
     std::size_t allocateBlock(const Request& request);
@@ -31,6 +33,12 @@ public:
     void writeToBlock(std::size_t blockId, std::size_t offset, int value);
     PrefixMatch findLongestCachedPrefix(const std::string& modelId, std::size_t embeddingSize,
                                         const std::vector<std::string>& promptTokens) const;
+
+    //For Server and Request to access private members of GPU - Kesem added:
+    std::size_t getBlockSize() const;        // Returns blockSize (number of integers per block).
+    bool isSlotIdle(std::size_t slot) const; // Returns true if the slot holds a non-null block with refCount == 0 (idle).
+    std::size_t getCacheHits() const;        // Returns total cached blocks acquired at admission (including copied blocks).
+    std::size_t getEvictions() const;        // Returns total idle blocks evicted to make room for new or copied blocks.
 private:
     std::size_t blocksNum;
     std::size_t blockSize;
