@@ -13,15 +13,18 @@ public:
 };
 
 class ArrivalOrderPolicy : public SchedulingPolicy { 
+  public:
     virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
     virtual SchedulingPolicy* clone() const override;
 
 };
 class ShortestJobPolicy : public SchedulingPolicy { 
+  public:
     virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
     virtual SchedulingPolicy* clone() const override;
 };
 class LongestPrefixPolicy : public SchedulingPolicy {
+  public:
     virtual std::vector<int> choose(const std::vector<const Request*>& eligible, const std::vector<GPU>& gpus) const override;
     virtual SchedulingPolicy* clone() const override;
 };
