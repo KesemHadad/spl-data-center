@@ -18,6 +18,12 @@ public:
     void writeToBlock(std::size_t offset, int value);
     void acquire();
     IdleAction release();
+
+    virtual ~MemoryBlock(); // Destructor
+    MemoryBlock(const MemoryBlock& other); // Copy-Cons
+    MemoryBlock& operator=(const MemoryBlock& other); // Copy-Assing
+    MemoryBlock(MemoryBlock&& other) noexcept; // Move-Cons
+    MemoryBlock& operator=(MemoryBlock&& other) noexcept; // Move-Assign
 };
 
 class KVBlock: public MemoryBlock{
