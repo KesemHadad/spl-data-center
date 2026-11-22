@@ -9,7 +9,6 @@ GPU::GPU(std::size_t blocksNum, std::size_t blockSize)
     : blocksNum(blocksNum), blockSize(blockSize), memory(blocksNum, nullptr),
       reservedTotal(0), reservations(), cacheMetadata(blocksNum), 
       cacheHitCount(0), evictCount(0) {
-
 }
 
 // Get Block Size
@@ -21,6 +20,9 @@ std::size_t GPU::getBlocksForMemory(std::size_t memory) const {
         return (memory/blockSize) + 1;
     return memory/blockSize;
 }
+
+std::size_t GPU::getCacheHits() const { return cacheHitCount; }
+std::size_t GPU::getEvictions() const { return evictCount; }
 
 bool GPU::isSlotIdle(std::size_t slot) const {
     return (memory[slot] != nullptr && memory[slot]->getRefCount() == 0);
@@ -242,4 +244,83 @@ void GPU::copyMemoryFromOtherGPU( const GPU& other, const std::vector<std::size_
         cacheMetadata[destSlot] = other.cacheMetadata[srcSlot];
         protectedSlots[destSlot] = true;
     }
+}
+
+//============================================================================================================
+
+
+#include <utility>  // std::move, std::swap
+
+// 1. Destructor
+GPU::~GPU() {
+    for (MemoryBlock* mBlock : memory) {
+        delete mBlock;
+    }
+}
+
+// 2. Copy Constructor
+GPU::GPU(const GPU& other) : blocksNum(other.blocksNum), blockSize(other.blockSize), 
+    memory(other.blocksNum, nullptr), reservedTotal(other.reservedTotal), reservations(other.reservations), 
+    cacheMetadata(other.cacheMetadata), cacheHitCount(other.cacheHitCount), evictCount(other.evictCount) {
+
+    for (size_t i = 0; i < blocksNum; i=i+1) {
+        if (other.memory[i] != nullptr) {
+            memory[i] = other.memory[i]->clone();
+            for (int j=0; j< other.memory[i]->getRefCount(); j=j+1) {
+               memory[i]->acquire();
+            }
+
+        }
+    }
+}
+
+// 3. Copy Assignment
+GPU& GPU::operator=(const GPU& other) {
+    if (this != &other) {
+        GPU temp(other); // עושה שימוש בבנאי ההעתקה שמעל פונקציה זו
+
+        // הנוכחי יהיה עם ערכי temp
+        // הערכים המקוריים של נוכחי יהרסו כי הם נמצאים בtemp שיוצא מהסקופ בסוף הפונקציה
+        std::swap(blocksNum, temp.blocksNum);
+        std::swap(blockSize, temp.blockSize);
+        memory.swap(temp.memory);
+        std::swap(reservedTotal, temp.reservedTotal);
+        reservations.swap(temp.reservations);
+        cacheMetadata.swap(temp.cacheMetadata);
+        std::swap(cacheHitCount, temp.cacheHitCount);
+        std::swap(evictCount, temp.evictCount);
+    }
+
+    return *this;
+}
+
+// 4. Move Constructor
+GPU::GPU(GPU&& other) noexcept : blocksNum(0), blockSize(0), memory(), reservedTotal(0),
+    reservations(), cacheMetadata(), cacheHitCount(0), evictCount(0) {
+
+    std::swap(blocksNum, other.blocksNum);
+    std::swap(blockSize, other.blockSize);
+    memory.swap(other.memory);
+    std::swap(reservedTotal, other.reservedTotal);
+    reservations.swap(other.reservations);
+    cacheMetadata.swap(other.cacheMetadata);
+    std::swap(cacheHitCount, other.cacheHitCount);
+    std::swap(evictCount, other.evictCount);
+}
+
+// 5. Move Assignment
+GPU& GPU::operator=(GPU&& other) noexcept {
+    if (this != &other) {
+        GPU temp(std::move(other));
+
+        std::swap(blocksNum, temp.blocksNum);
+        std::swap(blockSize, temp.blockSize);
+        memory.swap(temp.memory);
+        std::swap(reservedTotal, temp.reservedTotal);
+        reservations.swap(temp.reservations);
+        cacheMetadata.swap(temp.cacheMetadata);
+        std::swap(cacheHitCount, temp.cacheHitCount);
+        std::swap(evictCount, temp.evictCount);
+    }
+    return *this;
 }

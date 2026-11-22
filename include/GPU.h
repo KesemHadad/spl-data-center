@@ -43,6 +43,14 @@ public:
     bool isSlotIdle(std::size_t slot) const; // Returns true if the slot holds a non-null block with refCount == 0 (idle).
     std::size_t getCacheHits() const;        // Returns total cached blocks acquired at admission (including copied blocks).
     std::size_t getEvictions() const;        // Returns total idle blocks evicted to make room for new or copied blocks.
+
+    
+    ~GPU();                              
+    GPU(const GPU& other);               
+    GPU& operator=(const GPU& other);
+    GPU(GPU&& other) noexcept;
+    GPU& operator=(GPU&& other) noexcept;
+
 private:
     std::size_t blocksNum;
     std::size_t blockSize;

@@ -38,7 +38,7 @@ MemoryBlock::MemoryBlock(const MemoryBlock& other)
 
 // Copy Assignment - סדר פעולות לפי עיקרון Strong Exception Guarantee
 MemoryBlock& MemoryBlock::operator=(const MemoryBlock& other) {
-
+    
     if (this != &other) {
         int* newData = new int[other.size];
 
