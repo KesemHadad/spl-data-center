@@ -1,5 +1,6 @@
 #include "GPU.h"
 #include "MemoryBlock.h"
+#include <cassert>
 
 
 
@@ -34,7 +35,7 @@ void GPU::writeToBlock(std::size_t blockId, std::size_t offset, int value ) {
     memory[blockId]->writeToBlock(offset, value);
 }
 
-
+//============================================================================================================
 
 std::size_t GPU::availableSlots() const {
     size_t active_blocks = 0;
@@ -61,7 +62,7 @@ void GPU::unreserve(std::size_t n, const Request& request) {
         reservations.erase(id);
 }
 
-
+//============================================================================================================
 
 // checks for an existing entry with the same modelId and prefixTokens, assigns prefix via cache struct.
 void GPU::assignPrefixToBlock(std::size_t block, const std::vector<std::string>& prefixTokens, const std::string& modelId) {
@@ -101,4 +102,52 @@ void GPU::acquire(std::size_t slot) {
     }
 }
 
+//============================================================================================================
+
+ // GenerativeRequest
+void GPU::addMemoryBlock(const GenerativeRequest& request, std::size_t slot) {
+    memory[slot] = new KVBlock(blockSize);
+}
+
+// EmbeddingRequest
+void GPU::addMemoryBlock(const EmbeddingRequest& request, std::size_t slot) {
+    memory[slot] = new EmbeddingWorkspace(blockSize);
+}
+
+std::size_t GPU::allocateBlock(const Request& request) {
+    assert(reservations.count(request.getId()) > 0 &&
+       reservations.at(request.getId()) > 0);
+
+    size_t slot = blocksNum; // ערך התחלתי משמעותו - לא נמצא סלוט מתאים עדיין
+
+    //find first empty
+    for (size_t i = 0; i < blocksNum && slot == blocksNum; i=i+1) {
+        if (memory[i] == nullptr) {
+            slot = i;
+        }
+    }
+
+    // if none empty find first idle
+    if (slot == blocksNum) {
+        for (size_t i = 0; i < blocksNum && slot == blocksNum; i=i+1) {
+            if (isSlotIdle) {
+                slot = i;
+            }
+        }
+    }
+
+    assert(slot < blocksNum);
+    if (memory[slot] != nullptr) {
+        evictCount = evictCount + 1;
+        delete memory[slot];
+        cacheMetadata[slot] = CacheEntry();
+    }
+
+    request.allocateOneBlock(*this, slot); // לא הבנתי למה אני קוראת לרקווסט ולא עושה את זה אני עם הפונקציות שרשמתי למעלה 
+    unreserve(1, request);
+
+    return slot;
+}
+
+//============================================================================================================
 
