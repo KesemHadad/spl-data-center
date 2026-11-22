@@ -6,7 +6,8 @@
 // Constructor
 GPU::GPU(std::size_t blocksNum, std::size_t blockSize)
     : blocksNum(blocksNum), blockSize(blockSize), memory(blocksNum, nullptr),
-      reservedTotal(0), reservations() {
+      reservedTotal(0), reservations(), cacheMetadata(blocksNum), 
+      cacheHitCount(0), evictCount(0) {
 
 }
 
@@ -18,6 +19,10 @@ std::size_t GPU::getBlocksForMemory(std::size_t memory) const {
     if (memory % blockSize != 0)
         return (memory/blockSize) + 1;
     return memory/blockSize;
+}
+
+bool GPU::isSlotIdle(std::size_t slot) const {
+    return (memory[slot] != nullptr && memory[slot]->getRefCount() == 0);
 }
 
 // Assumes BlockId, memory[BlockID] are valid and offset < blockSize
@@ -55,3 +60,45 @@ void GPU::unreserve(std::size_t n, const Request& request) {
     if (reservations[id] == 0)
         reservations.erase(id);
 }
+
+
+
+// checks for an existing entry with the same modelId and prefixTokens, assigns prefix via cache struct.
+void GPU::assignPrefixToBlock(std::size_t block, const std::vector<std::string>& prefixTokens, const std::string& modelId) {
+    bool alreadyExist = false;
+    for (const CacheEntry& entry : cacheMetadata) {
+        if (entry.hasPrefix &&
+            entry.modelId == modelId &&
+            entry.prefixTokens == prefixTokens) {
+            alreadyExist = true;
+            break;
+        }
+    }
+
+    if (!alreadyExist) {
+        cacheMetadata[block].modelId = modelId;
+        cacheMetadata[block].prefixTokens = prefixTokens;
+        cacheMetadata[block].hasPrefix = true;
+    }
+}
+
+void GPU::release(std::size_t slot) {
+    IdleAction action = memory[slot]->release();
+    if (memory[slot]->getRefCount() == 0) {
+        if ((action == IdleAction::KeepCached && !cacheMetadata[slot].hasPrefix) ||
+            action == IdleAction::Destroy) {
+                delete memory[slot];
+                memory[slot] = nullptr;
+                cacheMetadata[slot] = CacheEntry();
+            }
+    }
+}
+
+void GPU::acquire(std::size_t slot) {
+    memory[slot]->acquire();
+    if (cacheMetadata[slot].hasPrefix) {
+        cacheHitCount = cacheHitCount + 1;
+    }
+}
+
+

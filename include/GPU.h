@@ -12,6 +12,8 @@ struct PrefixMatch {
     std::vector<std::size_t> blockIds;
 };
 
+
+
 class MemoryBlock;
 class Request; 
 class GenerativeRequest;
@@ -48,6 +50,19 @@ private:
 
     std::size_t reservedTotal;
     std::map<int, std::size_t> reservations;
+
+    struct CacheEntry {
+        std::string modelId;
+        std::vector<std::string> prefixTokens;
+        bool hasPrefix;
+
+        CacheEntry()
+            : modelId(), prefixTokens(), hasPrefix(false) {}
+    };
+    std::vector<CacheEntry> cacheMetadata;
+    std::size_t cacheHitCount;
+    std::size_t evictCount;
+
 };
 
 #endif
