@@ -40,18 +40,37 @@ class SchedulingPolicy;
 
 class Server{
 private:
-    Config readConfig(std::string configPath) const;
-
+   
     std::vector<GPU> gpus;
     std::vector<Model*> models;
     std::vector<Request*> nonSubmittedRequests;
     std::vector<Request*> waitingRequests;
     std::vector<Request*> activeRequests;
     SchedulingPolicy* policy;
+    
+    int cycle;
+    std::vector<std::size_t> activeRequestGpus;
+    std::size_t maxGpuBlocks;
+
+    Config readConfig(std::string configPath) const;
+    void clear();
+    const Model& findModelById(const std::string& modelId) const;
+    void copyFrom(const Server& other);
+    void submitArrivingRequests();
+    void admitWaitingRequests();
+    void executeActiveRequests();
+    int findBestGpuForRequest(const Request* req) const;
+    void copyLongerPrefixIfAvailable(const Request* req, std::size_t chosenGpu);   
+
 public:
     Server(std::string configPath);
     bool step();
-    void serve();
+    void serve(); 
+    ~Server();
+    Server(const Server& other);
+    Server& operator=(const Server& other);
+    Server(Server&& other);
+    Server& operator=(Server&& other);
 };
 
 #endif
