@@ -68,8 +68,7 @@ void GPU::unreserve(std::size_t n, const Request& request) {
 void GPU::assignPrefixToBlock(std::size_t block, const std::vector<std::string>& prefixTokens, const std::string& modelId) {
     bool alreadyExist = false;
     for (const CacheEntry& entry : cacheMetadata) {
-        if (entry.hasPrefix &&
-            entry.modelId == modelId &&
+        if (entry.hasPrefix && entry.modelId == modelId &&
             entry.prefixTokens == prefixTokens) {
             alreadyExist = true;
             break;
@@ -151,3 +150,38 @@ std::size_t GPU::allocateBlock(const Request& request) {
 
 //============================================================================================================
 
+PrefixMatch GPU::findLongestCachedPrefix(const std::string& modelId, std::size_t embeddingSize,
+    const std::vector<std::string>& promptTokens) const {
+    const size_t tokensPerBlock = blockSize / embeddingSize;
+    PrefixMatch returnVal = PrefixMatch{0, {}};
+    if (promptTokens.size() < tokensPerBlock) {
+        return returnVal;
+    }
+    
+    // מתחיל מ0 עד לא כולל אחרון
+    size_t prefixLength = tokensPerBlock;
+    bool found = true;
+    while (prefixLength <= promptTokens.size() && found) {
+
+        std::vector<std::string> currentPrefix( promptTokens.begin(),
+            promptTokens.begin() + prefixLength
+        );
+
+        found = false;
+
+        for (std::size_t i = 0; i < cacheMetadata.size() && !found; i=i+1) {
+            const CacheEntry& entry = cacheMetadata[i];
+
+            if (entry.hasPrefix && entry.modelId == modelId &&
+                entry.prefixTokens == currentPrefix) {
+
+                returnVal.blockIds.push_back(i);
+                returnVal.matchedTokens = prefixLength;
+                found = true;
+            }
+        }
+        prefixLength += tokensPerBlock;
+    }
+
+    return returnVal;
+}
