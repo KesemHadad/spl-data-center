@@ -129,7 +129,7 @@ std::size_t GPU::allocateBlock(const Request& request) {
     // if none empty find first idle
     if (slot == blocksNum) {
         for (size_t i = 0; i < blocksNum && slot == blocksNum; i=i+1) {
-            if (isSlotIdle) {
+            if (isSlotIdle(i)) {
                 slot = i;
             }
         }
@@ -184,4 +184,62 @@ PrefixMatch GPU::findLongestCachedPrefix(const std::string& modelId, std::size_t
     }
 
     return returnVal;
+}
+
+
+void GPU::copyMemoryFromOtherGPU( const GPU& other, const std::vector<std::size_t>& blocks) {
+    
+    // existing flags as protected to avoid evixting and unneccessary copying and isolated only missing
+    std::vector<bool> protectedSlots(blocksNum, false);
+    std::vector<std::size_t> missingBlocks;
+
+    for (std::size_t srcSlot : blocks) {
+        const CacheEntry& source = other.cacheMetadata[srcSlot];
+        bool found = false;
+
+        for (std::size_t i = 0; i < cacheMetadata.size() && !found; i=i+1) {
+            const CacheEntry& entry = cacheMetadata[i];
+
+            if (entry.hasPrefix && entry.modelId == source.modelId &&
+                entry.prefixTokens == source.prefixTokens) {
+
+                protectedSlots[i] = true;
+                found = true;
+            }
+        }
+
+        if (!found) {
+            missingBlocks.push_back(srcSlot);
+        }
+    }
+
+    // allocate slot without evicting protected
+    for (std::size_t srcSlot : missingBlocks) {
+        std::size_t destSlot = blocksNum;
+        //find first empty
+        for (size_t i = 0; i < blocksNum && destSlot == blocksNum; i=i+1) {
+            if (memory[i] == nullptr) {
+                destSlot = i;
+            }
+        }
+        // if none empty find first idle thats unprotected
+        if (destSlot == blocksNum) {
+            for (size_t i = 0; i < blocksNum && destSlot == blocksNum; i=i+1) {
+                if (isSlotIdle(i) && protectedSlots[i] == false) {
+                    destSlot = i;
+                }
+            }
+        }
+
+        assert(destSlot < blocksNum);
+        if (memory[destSlot] != nullptr) {
+            evictCount = evictCount + 1;
+            delete memory[destSlot];
+            cacheMetadata[destSlot] = CacheEntry();
+        }
+
+        memory[destSlot] = other.memory[srcSlot]->clone();
+        cacheMetadata[destSlot] = other.cacheMetadata[srcSlot];
+        protectedSlots[destSlot] = true;
+    }
 }
