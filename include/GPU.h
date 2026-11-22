@@ -1,5 +1,6 @@
 #ifndef GPU_H_
 #define GPU_H_
+#include <map>
 
 #include <string>
 #include <cstddef>
@@ -44,6 +45,9 @@ private:
     std::size_t blocksNum;
     std::size_t blockSize;
     std::vector<MemoryBlock*> memory;
+
+    std::size_t reservedTotal;
+    std::map<int, std::size_t> reservations;
 };
 
 #endif

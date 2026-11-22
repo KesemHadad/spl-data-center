@@ -5,7 +5,8 @@
 
 // Constructor
 GPU::GPU(std::size_t blocksNum, std::size_t blockSize)
-    : blocksNum(blocksNum), blockSize(blockSize), memory(blocksNum, nullptr) {
+    : blocksNum(blocksNum), blockSize(blockSize), memory(blocksNum, nullptr),
+      reservedTotal(0), reservations() {
 
 }
 
@@ -26,4 +27,31 @@ int GPU::readFromBlock(std::size_t blockId, std::size_t offset) const {
 
 void GPU::writeToBlock(std::size_t blockId, std::size_t offset, int value ) {
     memory[blockId]->writeToBlock(offset, value);
+}
+
+
+
+std::size_t GPU::availableSlots() const {
+    size_t active_blocks = 0;
+
+    for (size_t i =0; i < blocksNum; i=i+1) {
+        if (memory[i] != nullptr && memory[i]->getRefCount() > 0) {
+            active_blocks = active_blocks + 1;
+        }
+    }
+    return (blocksNum - active_blocks - reservedTotal);
+}
+
+// עבור בקשה חדשה מאתחל לפי id ב-0 ומוסיף n אוטומטית
+void GPU::reserve(std::size_t n, const Request& request) {
+    reservations[request.getId()] += n;
+    reservedTotal += n;
+}
+
+void GPU::unreserve(std::size_t n, const Request& request) {
+    int id = request.getId();
+    reservations[id] = reservations[id] - n;
+    reservedTotal = reservedTotal - n;
+    if (reservations[id] == 0)
+        reservations.erase(id);
 }

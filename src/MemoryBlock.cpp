@@ -82,6 +82,8 @@ MemoryBlock& MemoryBlock::operator=(MemoryBlock&& other) noexcept {
     return *this;
 }
 
+int MemoryBlock::getRefCount() const { return refCount; }
+
 
 
 KVBlock::KVBlock(size_t size) : MemoryBlock(size) { }

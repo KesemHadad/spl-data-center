@@ -24,6 +24,8 @@ public:
     MemoryBlock& operator=(const MemoryBlock& other); // Copy-Assing
     MemoryBlock(MemoryBlock&& other) noexcept; // Move-Cons
     MemoryBlock& operator=(MemoryBlock&& other) noexcept; // Move-Assign
+
+    int getRefCount() const;
 };
 
 class KVBlock: public MemoryBlock{
