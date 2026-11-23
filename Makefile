@@ -1,8 +1,8 @@
 all: bin/server
  
-bin/server: bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o
+bin/server: bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o bin/GPU.o bin/MemoryBlock.o
 	@echo 'Linking'
-	g++ -g -o bin/server bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o
+	g++ -g -o bin/server bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o bin/GPU.o bin/MemoryBlock.o
     
 bin/Main.o: src/Main.cpp
 	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/Main.o src/Main.cpp
@@ -30,6 +30,12 @@ bin/LongestPrefixPolicy.o: src/LongestPrefixPolicy.cpp
 
 bin/ShortestJobPolicy.o: src/ShortestJobPolicy.cpp
 	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude -o bin/ShortestJobPolicy.o src/ShortestJobPolicy.cpp
+
+bin/GPU.o: src/GPU.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude src/GPU.cpp -o bin/GPU.o
+
+bin/MemoryBlock.o: src/MemoryBlock.cpp
+	g++ -g -Wall -Weffc++ -std=c++11 -c -Iinclude src/MemoryBlock.cpp -o bin/MemoryBlock.o
 
 .PHONY: clean
  

@@ -1,14 +1,18 @@
 #ifndef GPU_H_
 #define GPU_H_
+#include <map>
 
 #include <string>
 #include <cstddef>
 #include <vector>
+#include "Request.h"
 
 struct PrefixMatch {
     std::size_t matchedTokens;
     std::vector<std::size_t> blockIds;
 };
+
+
 
 class MemoryBlock;
 class Request; 
@@ -39,10 +43,34 @@ public:
     bool isSlotIdle(std::size_t slot) const; // Returns true if the slot holds a non-null block with refCount == 0 (idle).
     std::size_t getCacheHits() const;        // Returns total cached blocks acquired at admission (including copied blocks).
     std::size_t getEvictions() const;        // Returns total idle blocks evicted to make room for new or copied blocks.
+
+    
+    ~GPU();                              
+    GPU(const GPU& other);               
+    GPU& operator=(const GPU& other);
+    GPU(GPU&& other) noexcept;
+    GPU& operator=(GPU&& other) noexcept;
+
 private:
     std::size_t blocksNum;
     std::size_t blockSize;
     std::vector<MemoryBlock*> memory;
+
+    std::size_t reservedTotal;
+    std::map<int, std::size_t> reservations;
+
+    struct CacheEntry {
+        std::string modelId;
+        std::vector<std::string> prefixTokens;
+        bool hasPrefix;
+
+        CacheEntry()
+            : modelId(), prefixTokens(), hasPrefix(false) {}
+    };
+    std::vector<CacheEntry> cacheMetadata;
+    std::size_t cacheHitCount;
+    std::size_t evictCount;
+
 };
 
 #endif
