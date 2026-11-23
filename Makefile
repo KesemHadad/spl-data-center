@@ -1,6 +1,6 @@
 all: bin/server
  
-bin/server: bin/Main.o bin/Model.o bin/Server.o
+bin/server: bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o
 	@echo 'Linking'
 	g++ -g -o bin/server bin/Main.o bin/Model.o bin/Server.o bin/Request.o bin/EmbeddingRequest.o bin/GenerativeRequest.o bin/ArrivalOrderPolicy.o bin/LongestPrefixPolicy.o bin/ShortestJobPolicy.o
     

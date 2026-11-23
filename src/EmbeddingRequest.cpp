@@ -27,7 +27,7 @@ Request* EmbeddingRequest::clone(const Model& model) const {
 
 std::size_t EmbeddingRequest::getMaxNeededMemory() const{return (model.getEmbeddingSize() * 2);}
 
-std::size_t EmbeddingRequest::getNeededMemory(const GPU& gpu) const{getMaxNeededMemory();}
+std::size_t EmbeddingRequest::getNeededMemory(const GPU& gpu) const{ return getMaxNeededMemory();}
 
 std::size_t EmbeddingRequest::getNeedToUnreserve() const{return reservedBlocks;}
 
